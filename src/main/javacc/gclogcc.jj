@@ -1,0 +1,252 @@
+PARSER_BEGIN(GcLogCC)
+
+package org.pjurski.gclog.parser;
+
+import java.io.StringReader;
+import java.io.Reader;
+
+public class GcLogCC {
+
+    GcLogCC(String s) 
+    {
+        this((Reader)(new StringReader(s)));   
+    }
+               
+    public static void main(String args[])
+    {
+        try
+        {
+        	GcLogCC parser = null; 
+        	for (String query : args) {
+                System.out.println("QUERY: " + query);
+                if (parser == null) {
+                	parser = new GcLogCC(query);
+                } else {
+                	parser.ReInit(new StringReader(query));
+                }
+                Token token = parser.token;
+                
+                parser.parse();
+                                
+                System.out.println("TOKENS: ");
+                while (token != null) {
+                	System.out.println("\t" + token.kind + ": " + GcLogCCConstants.tokenImage[token.kind] + ": " + token.image);
+                	token = token.next;
+                }
+			}
+        }
+        catch(Exception e)
+        {
+			e.printStackTrace();
+        }
+    }
+}
+PARSER_END(GcLogCC) 
+
+TOKEN :
+{
+		< COLON: ":" >
+|		< #DASH: "-" >
+|		< #PLUS: "+" >
+|		< #DOT: "." >
+|		< #DIGIT: ["0"-"9"] >
+
+|		< #STRING_LITERAL: (["A"-"Z","a"-"z"]) >
+|		< SKIP_ME: (" " | "\t" | "\r" | "\n" | "\r\n")+ >
+|		< #GC_EXTRA_LITERAL: ([" ","\t","\r","\n",",","(",")",":","."]) >
+|		< #GC_TEXT: (<STRING_LITERAL> | <GC_EXTRA_LITERAL> | <SKIP_ME> | <DIGIT>)+ >
+|       < GC_LEFT_BRACKET: "[" >
+|       < GC_RIGHT_BRACKET: "]" >
+|		< GC_MEMORY: (<DIGIT>)* (<SKIP_ME>)? "K" >
+|		< GC_MEMORY_BYTES: (<DIGIT>)* <SKIP_ME> ("bytes" | "byte") >
+}
+
+TOKEN :
+{
+		< GC_TIME: (<DIGIT>)+ <DOT> (<DIGIT>)+ >
+|		< GC_TIMES_USER: "user=" >
+|		< GC_TIMES_SYS: "sys=" >
+|   	< GC_TIMES_REAL: "real=" >
+
+|       < GC_PROMOTION_FAILED: "(promotion failed)" >
+|       < GC_CONCURRENT_MODE_FAILED: "(concurrent mode failure)" >
+
+|       < GC_ICMS_DC: "icms_dc=" (<DIGIT>)+ (<SKIP_ME>)? >
+
+|       < GC_APP_CONCURRENT_TIME: "Application time: " >
+|       < GC_APP_STOPPED_TIME: "Total time for which application threads were stopped: " >
+				
+|		< #GC_DESIRED_SURVIVOR_NEW_THRESHOLD: "new threshold " (<DIGIT>)* " (max " (<DIGIT>)* ")" >
+|		< #GC_DESIRED_SURVIVOR_AGE: (<SKIP_ME>)* "- age" (<SKIP_ME>)* (<DIGIT>)+ ":" (<SKIP_ME>)* <GC_MEMORY_BYTES> "," (<SKIP_ME>)* (<DIGIT>)* <SKIP_ME> ("total") >
+|		< #GC_DESIRED_SURVIVOR_SUFFIX: <SKIP_ME> "Desired" <SKIP_ME> "survivor" <SKIP_ME> "size" <SKIP_ME> <GC_MEMORY_BYTES> ((", " <GC_DESIRED_SURVIVOR_NEW_THRESHOLD>) | (<SKIP_ME>))? (<GC_DESIRED_SURVIVOR_AGE> (<SKIP_ME>)?)* >
+
+|		< GC_DESIRED_SURVIVOR: "GC" <GC_DESIRED_SURVIVOR_SUFFIX> > 
+|		< GC_PAR_NEW_DESIRED_SURVIVOR: "ParNew" <GC_DESIRED_SURVIVOR_SUFFIX> > 
+|       < GC_GC: "GC" >
+|		< GC_FULL_GC: "Full" <SKIP_ME> "GC" >
+|		< GC_FULL_GC_SYSTEM: "Full" <SKIP_ME> "GC" <SKIP_ME> "(System)" >
+|		< GC_CMS: "CMS"  >
+|		< GC_PERM: "Perm" >
+|		< GC_CMS_PERM: "CMS Perm" >
+|		< GC_PS_YOUNG_GEN: "PSYoungGen" >
+|		< GC_PAR_OLD_GEN: "ParOldGen" >
+|		< GC_PS_PERM_GEN: "PSPermGen" >
+|		< GC_PS_OLD_GEN: "PSOldGen" >
+|		< GC_YG_OCCUPANCY: "YG occupancy" >
+
+|		< GC_INC_GC: "Inc GC" >
+|		< GC_TRAIN: "Train" >
+|		< GC_TRAIN_MSC: "Train MSC" >
+
+|		< GC_PAR_NEW: "ParNew" >
+|		< GC_DEF_NEW: "DefNew" >
+|		< GC_TENURED: "Tenured" >
+   
+|		< GC_1_CMS_INITIAL_MARK: "1 CMS-initial-mark" >
+|		< GC_1_CMS_REMARK: "1 CMS-remark" >
+|		< GC_CMS_CONCURRENT_MARK_START: "[CMS-concurrent-mark-start]" >
+|		< GC_CMS_CONCURRENT_MARK: "CMS-concurrent-mark" >
+|		< GC_CMS_CONCURRENT_PRECLEAN_START: "[CMS-concurrent-preclean-start]" >
+|		< GC_CMS_CONCURRENT_PRECLEAN: "CMS-concurrent-preclean" >
+|		< GC_CMS_CONCURRENT_ABORTABLE_PRECLEAN_START: "[CMS-concurrent-abortable-preclean-start]" >
+|		< GC_CMS_CONCURRENT_ABORTABLE_PRECLEAN: "CMS-concurrent-abortable-preclean" >
+|		< GC_CMS_CONCURRENT_SWEEP_START: "[CMS-concurrent-sweep-start]" >
+|		< GC_CMS_CONCURRENT_SWEEP: "CMS-concurrent-sweep" >
+|		< GC_CMS_CONCURRENT_RESET_START: "[CMS-concurrent-reset-start]" >
+|		< GC_CMS_CONCURRENT_RESET: "CMS-concurrent-reset" >
+|		< GC_RESCAN_PARALLEL: "Rescan (parallel)" >
+|		< GC_WEAK_REFS_PROCESSING: "weak refs processing" >
+	 	  	    
+|		< GC_DATE: <DIGIT> <DIGIT> <DIGIT> <DIGIT> <DASH> <DIGIT> <DIGIT> <DASH> <DIGIT> <DIGIT> "T" <DIGIT> <DIGIT> <COLON> <DIGIT> <DIGIT> <COLON> <DIGIT> <DIGIT> <DOT> <DIGIT> <DIGIT> <DIGIT> <PLUS> <DIGIT> <DIGIT> <DIGIT> <DIGIT> >
+}
+
+
+void parse() :
+{
+}
+{        
+	applicationConcurrentTimeTerm()
+	timestampTerm() ": " 	
+	(
+		(		
+			LOOKAHEAD( infoSimpleFullTerm() ) 
+				infoSimpleFullTerm() 
+			| 
+				infoComplexTerm()
+			(<SKIP_ME>)*
+		) | (<GC_CMS_CONCURRENT_MARK_START> | <GC_CMS_CONCURRENT_PRECLEAN_START> | <GC_CMS_CONCURRENT_ABORTABLE_PRECLEAN_START> | <GC_CMS_CONCURRENT_SWEEP_START> | <GC_CMS_CONCURRENT_RESET_START>)?
+	)
+	(<SKIP_ME>)* 
+	timesTerm()	
+	(<SKIP_ME>)* 
+	applicationStoppedTimeTerm()
+}
+
+void timestampTerm() :
+{	
+}
+{
+	( 
+		(
+			<GC_DATE> ": " <GC_TIME>  
+		 | 
+			<GC_TIME> 
+		) 
+	)
+}
+
+void infoSimpleStartTerm() :
+{
+}
+{
+	<GC_LEFT_BRACKET> 
+	(
+		infoGcType() 
+		(<SKIP_ME>)* (<GC_PROMOTION_FAILED>)? ((timestampTerm())? ((": ") | ("  ")) )?
+	)
+}
+
+void infoSimpleFullTerm() :
+{	
+}
+{
+	infoSimpleStartTerm() (infoGcMemory())? 
+	(<GC_TIME> "/" <GC_TIME> " secs")? 
+	(
+		(
+			(", " 
+				(<GC_TIME> " secs")?
+			) <GC_RIGHT_BRACKET> 
+			(
+				(timestampTerm())? ((": ") | ("  ")) 
+			)? 
+		) 				
+		| <GC_RIGHT_BRACKET> (
+				(timestampTerm())? ((": ") | ("  ")) 
+			)?
+	)
+}
+
+void infoGcType() :
+{
+}
+{
+	<GC_DESIRED_SURVIVOR> | <GC_PAR_NEW_DESIRED_SURVIVOR> | <GC_GC> | <GC_FULL_GC> | <GC_FULL_GC_SYSTEM> | <GC_CMS> | <GC_CMS_PERM> | <GC_PS_YOUNG_GEN> | <GC_PAR_OLD_GEN> | <GC_PS_PERM_GEN> | <GC_PS_OLD_GEN> | <GC_DEF_NEW> | <GC_PAR_NEW> | <GC_TENURED> | <GC_YG_OCCUPANCY> | <GC_TRAIN> | <GC_TRAIN_MSC> | <GC_INC_GC> | <GC_PERM>
+	| 
+	<GC_1_CMS_INITIAL_MARK> | <GC_1_CMS_REMARK>	| <GC_CMS_CONCURRENT_MARK> | <GC_CMS_CONCURRENT_PRECLEAN> | <GC_CMS_CONCURRENT_ABORTABLE_PRECLEAN> | <GC_CMS_CONCURRENT_SWEEP> | <GC_CMS_CONCURRENT_RESET>
+	| <GC_RESCAN_PARALLEL> | <GC_WEAK_REFS_PROCESSING>
+}
+
+void infoGcMemory() :
+{
+}
+{
+	<GC_MEMORY> ("->" <GC_MEMORY>)? (<SKIP_ME>)? "(" <GC_MEMORY> ")"
+}
+
+void infoComplexTerm() :
+{	
+}
+{
+	( 
+		(
+			infoSimpleStartTerm()
+			
+			(
+				infoSimpleFullManyTerm()	
+			)+
+						 
+			(<GC_TIME> " secs")? <GC_RIGHT_BRACKET>
+		) 
+	)	
+}
+
+void infoSimpleFullManyTerm() :
+{
+}
+{
+	(
+		 (<SKIP_ME>)* infoSimpleFullTerm() (<SKIP_ME>)* (<GC_CONCURRENT_MODE_FAILED> ": ")? (infoGcMemory() (<SKIP_ME>)* )? ((<SKIP_ME>)* <GC_ICMS_DC>)? (", ")?			 
+	)
+}
+
+void timesTerm() :
+{	
+}
+{
+	(<GC_LEFT_BRACKET> "Times" ": " <GC_TIMES_USER> <GC_TIME> <SKIP_ME> <GC_TIMES_SYS> <GC_TIME> ", " <GC_TIMES_REAL> (<SKIP_ME>)* <GC_TIME> " secs" <GC_RIGHT_BRACKET>)?
+}
+
+void applicationConcurrentTimeTerm() :
+{	
+}
+{
+	(<GC_APP_CONCURRENT_TIME> <GC_TIME> " seconds" (<SKIP_ME>)*)?
+}
+
+void applicationStoppedTimeTerm() :
+{	
+}
+{
+	(<GC_APP_STOPPED_TIME> <GC_TIME> " seconds" (<SKIP_ME>)*)?
+}
